@@ -1,0 +1,63 @@
+@import "tailwindcss";
+
+.hero-swiper .swiper-button-prev,
+.hero-swiper .swiper-button-next {
+  width: 25px ;
+  height: 25px ;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 50%;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Réduire la flèche et la garder au centre */
+.hero-swiper .swiper-button-prev::after,
+.hero-swiper .swiper-button-next::after {
+  font-size: 10px ;
+  font-weight: bold;
+  line-height: 1;
+}
+
+/* Position des cercles */
+.hero-swiper .swiper-button-prev {
+  left: 12px;
+}
+
+.hero-swiper .swiper-button-next {
+  right: 12px;
+}
+
+/* Mobile */
+@media (max-width: 640px) {
+  .hero-swiper .swiper-button-prev,
+  .hero-swiper .swiper-button-next {
+    width: 32px ;
+    height: 32px ;
+  }
+
+  .hero-swiper .swiper-button-prev::after,
+  .hero-swiper .swiper-button-next::after {
+    font-size: 9px ;
+  }
+}
+
+.nav_link{
+    position: relative;
+}
+
+.nav_link::after{
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -6px;
+  width: 0;
+  height: 2px;
+  background: red;
+  transition: width .3s;
+}
+
+.nav_link.active::after {
+  width: 100%;
+}

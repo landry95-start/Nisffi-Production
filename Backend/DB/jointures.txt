@@ -1,0 +1,173 @@
+L'objectif est de comprendre comment PostgreSQL relie les donnees de plusieurs tables grace aux jointures.
+
+1. Creons deux tables :
+
+
+Imaginons une boutique qui vend 4 produits :
+
+Téléphone
+Ordinateur
+Chaussure
+Sac
+
+Table 1 : categorie 
+
+id     nom
+
+1     Electronique
+2     Mode
+
+
+Table 2 : produits
+
+
+id        nom            Prix         categorie_id
+
+1       Telephone        150.000       1
+2       Ordinateur       350000        1
+3       Chaussure        25000         2
+4       Sac              40000         2
+
+
+
+Remarque: dans la table produit on n'a pas ecris "Electronique" ou "Mode".
+
+Parce que categorie_id permet de retrouver la catégorie correspondante dans la table categories.
+
+
+
+Passons au sql 
+
+D'abord, la table des catégories :
+CREATE TABLE categories (
+    id SERIAL PRIMARY KEY,
+    nom VARCHAR(100) NOT NULL
+);
+
+
+Ensuite, la table des produits :
+CREATE TABLE produits (
+    id SERIAL PRIMARY KEY,
+    nom VARCHAR(100) NOT NULL,
+    prix NUMERIC(10, 2),
+    categorie_id INTEGER REFERENCES categories(id)
+);
+
+
+Insersions des donnees :
+
+INSERT INTO categories (nom)
+VALUES
+('Electronique'),
+('Mode');
+
+
+INSERT INTO produits (nom, prix, categorie_id)
+VALUES
+('Telephone', 150000, 1),
+('Ordinateur', 350000, 1),
+('Chaussure', 25000, 2),
+('Sac', 40000, 2);
+
+
+3. La premiere requete : Recuperer tous les produits 
+
+SELECT * FROM produits;
+
+Résultat :
+id	nom	         prix	categorie_id
+1	Telephone	150000	    1
+2	Ordinateur	350000	    1
+3	Chaussure	25000	    2
+4	Sac	        40000	    2
+
+Jusqu'ici, rien de compliqué.
+
+Mais imaginons que tu souhaites afficher les produits sur ton sites 
+
+
+Tu veux obtenir :
+
+
+Produit	     Prix	Catégorie
+
+Telephone	150000	Electronique
+Ordinateur	350000	Electronique
+Chaussure	25000	Mode
+Sac	        40000	Mode
+
+
+Le probleme est que le nom de la categorie se trouve dans une autre table :
+
+
+SOLUTION :56
+
+SELECT
+    produits.id,
+    produits.nom,
+    produits.prix,
+    categories.nom AS categorie
+FROM produits
+INNER JOIN categories
+ON produits.categorie_id = categories.id;
+
+
+FROM produits
+
+
+Nous indiquons à PostgreSQL que notre requête part de la table produits.
+
+
+INNER JOIN categories
+
+
+Nous demandons à PostgreSQL de relier la table produits à la table categories.
+
+
+Étape 3 :
+ON produits.categorie_id = categories.id
+
+C'est la partie la plus importante !
+
+Nous expliquons à PostgreSQL comment reconnaître les lignes qui correspondent entre les deux tables.
+
+Par exemple :
+- Le téléphone possède categorie_id = 1.
+- La catégorie dont id = 1 est Électronique.
+- PostgreSQL associe donc le téléphone à Électronique.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+categorie_id INTEGER REFERENCES categories(id) permet de creer une cle etrangere dans une autre table.
+
+Decomposons la pour comprendre :
+
+1. categorie_id : C'est le nom de la colonne que nous creons dans la table produit
+
+cette colonne va contenir l'indentifiant de la categorie a laquelle appartient un produit.
+
+2. INTEGER
+
+Cela signifie que cette colonne doit contenir un nombre entier.
+
+Par exemple : 1, 2, 3, etc.
+
+3. REFERENCES categories(id)
+
+Il s'agit de la partie la plus importante. 
+
+Elle signifie :
+
+    "Les valeurs enregistrees dans categorie_id doivent correspondre des indentifiants existant dans la colonne id 
+        de la table categorie"

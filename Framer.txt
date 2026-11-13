@@ -1,0 +1,272 @@
+Framer motion est une bibliotheque js qui permet de faire des animations dans les applications React.js.
+
+
+Un menu qui apparaît progressivement.
+Une image qui glisse depuis la droite.
+Une carte produit qui grandit légèrement au survol.
+Un titre qui apparaît avec un effet de fondu.
+Une page qui disparaît progressivement avant l'affichage de la suivante.
+
+
+Tous ces animations peuvent etre realise par Framer motion
+
+
+Imaginons un produit
+
+
+etat initial : opacite = 0 (invisible au depart)
+ 
+etat final : opacite = 1  (visible progressivement)
+
+L'élément passe progressivement d'une opacité de 0 à une opacité de 1.
+
+
+Les 3 notions fondamentales a maitriser avec Framer motion :
+
+initial ======= definit l'etat de depart
+
+animate ======== definit l'etat vers lequel l'element doit evoluer
+
+transition ====== Definit comment l'animation se deroule
+
+
+import { motion } from "framer-motion";
+
+export default function App() {
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: -100 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 1 }}
+    >
+      Bienvenue chez Anastelle
+    </motion.div>
+  );
+}
+
+
+motion.div : indique que notre div peut être animée.
+initial : l'élément commence invisible et décalé de 100 pixels vers la gauche.
+animate : il devient visible et revient à sa position normale.
+transition : l'animation dure une seconde.
+
+
+
+
+
+
+whilehover === animation de survol
+whiletap ===== animation de clic
+
+
+import { motion } from "framer-motion";
+
+export default function ProductCard() {
+  return (
+    <motion.div
+      whileHover={{ scale: 1.05 }}
+      className="p-6 bg-white shadow-lg rounded-xl"
+    >
+      <h2>Sac à main</h2>
+      <p>45 000 FCFA</p>
+    </motion.div>
+  );
+}
+
+
+whileHover={{ scale: 1.05 }}
+
+
+- scale: 1 = taille normale.
+- scale: 1.05 = agrandissement de 5 %.
+- L'animation se déclenche automatiquement au survol.
+
+Imagine maintenant un bouton « Ajouter au panier ».
+<motion.button
+  whileTap={{ scale: 0.95 }}
+  className="bg-black text-white px-6 py-3 rounded-lg"
+>
+  Ajouter au panier
+</motion.button>
+
+
+Quand l'utilisateur clique, le bouton se réduit légèrement. Cela donne une sensation de pression.
+
+3. Combiner plusieurs animations
+Tu peux utiliser les deux propriétés sur le même élément :
+<motion.button
+  whileHover={{ scale: 1.05 }}
+  whileTap={{ scale: 0.95 }}
+  transition={{ duration: 0.2 }}
+>
+  Découvrir la boutique
+</motion.button>
+
+
+
+
+
+partie 3 : Le scroll animation (animation de defilement)
+
+
+
+La propriété whileInView : animation qui se declenche lorsque lorsque l'element entre dans la zone visible de l'ecran
+
+
+Exemple :
+import { motion } from "framer-motion";
+
+export default function Categories() {
+  return (
+    <motion.section
+      initial={{ opacity: 0, y: 60 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.8 }}
+      viewport={{ once: true }}
+    >
+      <h2>Nos catégories</h2>
+    </motion.section>
+  );
+}
+
+initial	Section invisible et décalée de 60 px vers le bas
+whileInView	Section visible et à sa position normale
+transition	Animation de 0,8 seconde
+viewport	Contrôle le comportement lorsque l'élément entre dans l'écran
+once: true signifie que l'animation se joue une seule fois.
+
+si tu mets once: false, elle pourra se rejouer lorsque l'élément sort puis revient dans la zone visible.
+
+
+La notion de variant en framer :
+
+La notion de variant permet de definir plusieurs etat d'animation dans des objets. Puis de demander a un composant de passer 
+d'un etat a un autre (etat que j'ai defini).
+
+Imagine que tu veux animer une carte de produit dans ton site. Elle soit apparaitre progressiment puis 
+remonter au survol.
+
+Au lieu d'ecrire toutes les animations directement dans le composant. tu les regroupes dans variants.
+
+
+Un variant est tout simplement un etat d'animation nommmee 
+
+const cardVariants = {
+  hidden: {
+    opacity: 0,
+    y: 30,
+  },
+
+  visible: {
+    opacity: 1,
+    y: 0,
+  },
+};
+
+Ici, nous avons deux états :
+- hidden : la carte est invisible et décalée de 30 pixels vers le bas.
+- visible : la carte est visible et revient à sa position normale.
+
+
+import { motion } from "framer-motion";
+
+const cardVariants = {
+  hidden: {
+    opacity: 0,
+    y: 30,
+  },
+
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.5,
+    },
+  },
+};
+
+export default function ProductCard() {
+  return (
+    <motion.div
+      variants={cardVariants}
+      initial="hidden"
+      animate="visible"
+      className="bg-white p-6 rounded-xl shadow"
+    >
+      <h2>Mon produit</h2>
+      <p>Un magnifique sac à main.</p>
+    </motion.div>
+  );
+}
+
+
+Comment ça fonctionne ?
+1. variants={cardVariants} : indique les animations disponibles.
+2. initial="hidden" : définit l'état de départ.
+3. animate="visible" : indique l'état vers lequel on veut aller.
+
+
+4. Le vrai avantage : Les variants parents et enfants
+
+C'est l'une des fonctionnalites les plus importantes.
+
+Imagine que tu as une liste de 4 cartes statistiques dans ton Dashboard. Tu veux qu'elles apparaissent l'une après l'autre.
+
+
+
+import { motion } from "framer-motion";
+
+const containerVariants = {
+  hidden: {
+    opacity: 0,
+  },
+
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.2,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: {
+    opacity: 0,
+    y: 20,
+  },
+
+  visible: {
+    opacity: 1,
+    y: 0,
+  },
+};
+
+export default function DashboardCards() {
+  return (
+    <motion.div
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+      className="grid grid-cols-4 gap-4"
+    >
+      {[1, 2, 3, 4].map((item) => (
+        <motion.div
+          key={item}
+          variants={itemVariants}
+          className="bg-white p-6 rounded-xl shadow"
+        >
+          Carte {item}
+        </motion.div>
+      ))}
+    </motion.div>
+  );
+}
+
+
+
+staggerChildren ?
+
+Stagger = decaler, en cascade
+
+staggerChildren : 0.15s ca veut dire : "Parent ne lance pas toutes les cards en meme temps,
+laisse 0.15 seconde entre chaque enfant."

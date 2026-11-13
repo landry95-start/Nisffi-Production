@@ -1,0 +1,1 @@
+Framer motion est une bibliotheque javascript qui permet de faire des animations avec React 

@@ -1,0 +1,119 @@
+Pourquoi utiliser FormData alors que handleSubmit de React Hook Form recupere deja toutes les donnees du formulaire ?
+
+La raison est tres simple : RHF et FormData n'ont pas le meme role.
+
+RHF : recupere et organise les donnees du formulaire.
+
+FormData : prepare ces donnees pour les envoyes au serveur notamment lorsqu'on envoie des fichiers (images, pdf ..etc).
+
+
+
+1. Ce que fait handleSubmit :
+
+
+const { register, handleSubmit } = useForm();
+
+async function AddCategory(data) {
+  console.log(data);
+}
+
+
+Les champs de formulaire
+
+
+<form onSubmit={handleSubmit(AddCategory)}>
+  <input type="text" {...register("nom")} />
+
+  <input type="text" {...register("slug")} />
+
+  <input type="file" {...register("image")} />
+
+  <button type="submit">Ajouter</button>
+</form>
+
+
+Lorsque tu soumets le formulaire, RHF recupere les valeurs et les transmet a AddCategory.
+
+On peut obtenir quelque chose comme :
+
+{
+    nom : "sac a main",
+    slug : "sac-a-main",
+    image : FileList
+}
+
+
+2. Alors pourquoi FormData ?
+
+imagine que tu veuilles envoyer les donnees de ton formulaire vers ton backend tu serais tenter de faire :
+
+async function AddCategory(data) {
+  const response = await axios.post(
+    "http://localhost:3000/api/category",
+    data
+  );
+}
+
+Cela fonctionne tres bien pour les donnees classiques :
+
+{
+    nom : "sac a main",
+    slug : "sac-a-main",
+}
+
+Mais ton formulaire contient un fichier image.
+
+Or, une image est un fichier est un fichier binaire et pour envoyer correctement un fichier avec les autres 
+champs on utilise le format multipart/form-data.
+
+
+const formData = new FormData();
+
+Ici tu viens de creer un objet formData vide 
+
+Maintenant, tu peux y ajouter des données :
+
+formData.append("nom", data.nom);
+
+formData.append("slug", data.slug);
+
+formData.append("image", data.image[0]);
+
+
+La méthode .append() signifie simplement : ajoute une donnée dans FormData avec un nom et une valeur.
+
+Sa syntaxe est :
+
+formData.append("nom_du_champ", valeur);
+
+
+Tu peux ensuite l'envoyer :
+await axios.post(
+  "http://localhost:3000/api/category",
+  formData
+);
+
+
+
+4. Pourquoi data.image[0] et nom data.image ?
+
+C'est un detail important 
+
+Un champ de type fichier :
+
+<input type="file" {...register("image")} />
+
+renvoie un objet FileList, même si tu sélectionnes une seule image.
+
+Donc :
+
+
+data.image
+
+
+représente la liste des fichiers sélectionnés.
+
+data.image[0]
+
+
+représente le premier fichier réellement sélectionné.
