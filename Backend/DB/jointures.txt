@@ -169,5 +169,108 @@ Il s'agit de la partie la plus importante.
 
 Elle signifie :
 
-    "Les valeurs enregistrees dans categorie_id doivent correspondre des indentifiants existant dans la colonne id 
+    "Les valeurs enregistrees dans categorie_id doivent correspondre a des indentifiants existant dans la colonne id 
         de la table categorie"
+
+
+
+
+La question importante: Qui rempli la cle etrangere et comment elle recoit la valeur ?
+
+
+Prenons un exemple avec deux tables : Eleves et classes
+
+
+Eleve contient la cle etrangere qui reference la table classes.
+
+c'est au moment de l'insertion d'un nouvele etudiant que nous renseignons la cle etrangere.
+
+Revenons a notre exemple:
+
+1. Nous avons deux tables
+
+
+Table salles
+id	nom_salle
+1	Salle A
+2	Salle B
+3	Salle C
+
+
+Table eleves
+id	nom	salle_id
+1	Paul	1
+2	Marie	2
+
+Tu remarques que Paul a salle_id = 1.
+
+Cela signifie que Paul est dans la salle dont l'identifiant est 1, donc Salle A.
+
+Mais comment cette valeur 1 est-elle arrivée dans eleves.salle_id ?
+
+2. Premiere etape : Creer les salles 
+
+
+Avant de creer les eleves, nous devons avoir les salles deja enregistree en BD.
+
+INSERT INTO salles (nom_salle)
+VALUES
+('Salle A'),
+('Salle B'),
+('Salle C');
+
+
+PostgreSQL génère automatiquement les identifiants grâce à SERIAL.
+
+Nous obtenons :
+id	nom_salle
+1	Salle A
+2	Salle B
+3	Salle C
+
+
+3. Deuxieme etape : Inscrire les eleves 
+
+INSERT INTO eleves (nom, salle_id)
+VALUES
+('Paul', 1),
+('Marie', 2);
+
+
+Regarde attentivement :
+('Paul', 1)
+('Marie', 2)
+
+
+C'est nous qui renseignons la clé étrangère !
+- Paul reçoit 1 parce qu'il est dans la salle A.
+- Marie reçoit 2 parce qu'elle est dans la salle B.
+La base de données vérifie que ces identifiants existent dans la table salles.
+
+Donc on associe les tables grace a la condition de jointure.
+
+
+Comment cela ce passe avec un formulaire ?
+
+
+Imaginons que tu as un formulaire d'inscription d'élève.
+
+Inscription d'un élève
+
+Nom de l'élèvePaul
+
+Salle de classeSalle A (B, C)  // menu deroulant
+
+
+
+Dans ton application, la valeur réellement envoyée sera l'identifiant de la salle : 1.
+
+
+
+
+Le fonctionnement est le suivant :
+1. React récupère les salles depuis PostgreSQL via Express.
+2. React affiche leurs noms dans une liste déroulante.
+3. Lorsque l'utilisateur choisit Salle A, React récupère son id (1).
+4. React envoie cet identifiant au backend avec les informations de l'élève.
+5. Express effectue l'insertion dans eleves en renseignant salle_id.

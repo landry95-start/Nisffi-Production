@@ -8,25 +8,17 @@ import { randomUUID } from "crypto";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Fonction qui crée un middleware Multer selon le dossier choisi
 const createUpload = (folder) => {
-
-    const uploadDir = path.join(
-        __dirname,
-        "../uploads",
-        folder
-    );
+    const uploadDir = path.join(__dirname, "../uploads", folder);
 
     fs.mkdirSync(uploadDir, { recursive: true });
 
     const storage = multer.diskStorage({
-
         destination: (req, file, cb) => {
             cb(null, uploadDir);
         },
 
         filename: (req, file, cb) => {
-
             const extensions = {
                 "image/jpeg": ".jpg",
                 "image/png": ".png",
@@ -37,11 +29,9 @@ const createUpload = (folder) => {
 
             cb(null, randomUUID() + extension);
         }
-
     });
 
     const fileFilter = (req, file, cb) => {
-
         const formatsAutorises = [
             "image/jpeg",
             "image/png",
@@ -53,7 +43,6 @@ const createUpload = (folder) => {
         } else {
             cb(new Error("Format d'image non autorisé"), false);
         }
-
     };
 
     return multer({
@@ -63,12 +52,12 @@ const createUpload = (folder) => {
             fileSize: 2 * 1024 * 1024
         }
     });
-
 };
 
-// Deux configurations réutilisables
-export const uploadCategory = createUpload("categories");
 export const uploadProduct = createUpload("products");
+
+
+
 
 
 /*

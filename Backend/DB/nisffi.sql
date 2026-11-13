@@ -158,3 +158,10 @@ FROM produit
 ORDER BY created_at DESC;
 
 SELECT * FROM produit;
+
+CREATE TABLE images_produits (
+    id SERIAL PRIMARY KEY,
+    produit_id INTEGER NOT NULL REFERENCES produit(id) ON DELETE CASCADE,
+    url TEXT NOT NULL,
+    est_principale BOOLEAN DEFAULT FALSE
+);

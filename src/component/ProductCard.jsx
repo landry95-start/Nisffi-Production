@@ -2,12 +2,13 @@ import React from 'react'
 import { Star, ShoppingCart, ArrowRight, Heart } from 'lucide-react'
 import { useProducts } from './DashboardAdmin/ContextProduct';
 import { useCart } from './CartProvider';
-
+import { useNavigate } from 'react-router-dom';
 
 const ProductCard = () => {
 
     const { products } = useProducts();
     const { addCart } = useCart();
+    const navigate = useNavigate();
 
     return (
         <section className='px-4 sm:px-6 lg:px-8 py-8 bg-[#FFF1F2]'>
@@ -38,6 +39,9 @@ const ProductCard = () => {
                         <article
                             key={product.id}
                             className="bg-white border border-[#EAE3DE] overflow-hidden group max-w-[190px] mx-auto w-full"
+                            onClick={() => navigate("/details", {
+                                state: { article: product }
+                            })}
                         >
 
                             <div className="relative aspect-[4/3] bg-[#F3E9DF] overflow-hidden">

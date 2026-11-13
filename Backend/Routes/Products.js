@@ -15,7 +15,10 @@ router.get("/", GetProducts);
 
 router.post(
     "/",
-    uploadProduct.single("image"),
+    uploadProduct.fields([
+        { name: "image", maxCount: 1 },
+        { name: "images", maxCount: 5 }
+    ]),
     AddProduct
 );
 
