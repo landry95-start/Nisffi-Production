@@ -167,3 +167,4 @@ CREATE TABLE images_produits (
 );
 
 DELETE FROM admin;
+
