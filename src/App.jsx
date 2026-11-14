@@ -1,5 +1,7 @@
+
 import './App.css'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
+
 import ShopLayout from './layouts/ShopLayout'
 import Home from './pages/Home'
 import Nouveaute from './pages/Nouveaute'
@@ -13,6 +15,8 @@ import Login from './pages/Login'
 import Register from './pages/Register'
 import Admin from './pages/Admin'
 import ProductFormPage from './component/ProductFormPage'
+import ProtectedRoute from './component/ProtectedRoute'
+
 import CartProvider from './component/CartProvider'
 import Cart from './pages/Cart'
 import ContextCategory from './component/DashboardAdmin/ContextCategory'
@@ -20,38 +24,43 @@ import ContextProduct from './component/DashboardAdmin/ContextProduct'
 
 function App() {
 
-  return (
-    <>
-      <BrowserRouter>
-        <CartProvider>
-          <ContextCategory>
-            <ContextProduct>
-              <Routes>
-                <Route element={<ShopLayout/>}>
-                  <Route path="/" element={<IntroPage />} />
-                  <Route path='/home' element={<Home/>} />
-                  <Route path='/homme' element={<Nouveaute/>} />
-                  <Route path='/femme' element={<Femmes/>} />
-                  <Route path='/article' element={<Hommes/>} />
-                  <Route path='/accessoires' element={<Accessoires/>}/>
-                  <Route path='/boutique' element={<Boutique/>} />
-                  <Route path='/details' element={<Details/>} />
-                  <Route path='/cart' element={<Cart/>} />
-                </Route>
-                <Route path='/login' element={<Login/>} />
-                <Route path='/register' element={<Register/>} />
-                <Route path='/admin' element={<Admin/>} />
-                <Route path="/admin/product-form"element={<ProductFormPage />}/>
-              </Routes> 
-            </ContextProduct>
-          </ContextCategory>
-        </CartProvider>
-      </BrowserRouter>
-    </>
-  )
+    return (
+        <BrowserRouter>
+            <CartProvider>
+                <ContextCategory>
+                    <ContextProduct>
+                        <Routes>
+
+                            <Route element={<ShopLayout />}>
+                                <Route path="/" element={<IntroPage />} />
+                                <Route path="/home" element={<Home />} />
+                                <Route path="/homme" element={<Nouveaute />} />
+                                <Route path="/femme" element={<Femmes />} />
+                                <Route path="/article" element={<Hommes />} />
+                                <Route path="/accessoires" element={<Accessoires />} />
+                                <Route path="/boutique" element={<Boutique />} />
+                                <Route path="/details" element={<Details />} />
+                                <Route path="/cart" element={<Cart />} />
+                            </Route>
+
+                            <Route path="/login" element={<Login />} />
+                            <Route path="/register" element={<Register />} />
+
+                            <Route element={<ProtectedRoute />}>
+                                <Route path="/admin" element={<Admin />} />
+                                <Route path="/admin/product-form" element={<ProductFormPage />} />
+                            </Route>
+
+                        </Routes>
+                    </ContextProduct>
+                </ContextCategory>
+            </CartProvider>
+        </BrowserRouter>
+    )
 }
 
 export default App
+
 
 
 /*

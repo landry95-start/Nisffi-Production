@@ -1,11 +1,10 @@
-import db from '../config/db.js'
-import bcrypt from 'bcrypt'
-import jwt from 'jsonwebtoken';
+import db from "../config/db.js";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 
 async function Register(req, res) {
     try {
-
-        const {nom, email, password} = req.body || {};
+        const { nom, email, password } = req.body || {};
 
         if (!nom || !email || !password) {
             return res.status(400).json({
@@ -15,61 +14,70 @@ async function Register(req, res) {
 
         const normalizedEmail = email.trim().toLowerCase();
 
-        const getEmailUserQuery = `SELECT id FROM admin WHERE email = $1`
+        const getEmailUserQuery = `
+            SELECT id FROM admin WHERE email = $1
+        `;
 
         const user = await db.query(getEmailUserQuery, [normalizedEmail]);
 
         if (user.rows.length > 0) {
             return res.status(409).json({
                 type: "email",
-                message : "Cet email existe deja"
+                message: "Cet email existe déjà"
             });
-        };
+        }
 
         const passwordCrypt = await bcrypt.hash(password, 12);
-        const createUserQuery = `INSERT INTO admin (nom, email, mot_de_passe) VALUES ($1, $2, $3) RETURNING id, nom, email`;
 
-        const newUserResult = await db.query(createUserQuery,
-            [nom, normalizedEmail, passwordCrypt]
-        );
+        const createUserQuery = `
+            INSERT INTO admin (nom, email, mot_de_passe)
+            VALUES ($1, $2, $3)
+            RETURNING id, nom, email
+        `;
 
-        res.status(201).json({
+        const newUserResult = await db.query(createUserQuery, [
+            nom,
+            normalizedEmail,
+            passwordCrypt
+        ]);
+
+        return res.status(201).json({
             message: "Votre compte a été créé avec succès",
-            admin : {
-                id: newUserResult.rows[0].id,
-                nom: newUserResult.rows[0].nom,
-                email: newUserResult.rows[0].email
-            }
-        })
-        
+            admin: newUserResult.rows[0]
+        });
+
     } catch (error) {
         console.error(error);
 
-        res.status(500).json({
+        return res.status(500).json({
             message: "Une erreur est survenue lors de la création du compte"
         });
     }
 }
 
-
-
-
 async function Login(req, res) {
     try {
+        const { email, password } = req.body;
 
-        const {email, password} = req.body;
+        if (!email || !password) {
+            return res.status(400).json({
+                message: "Veuillez remplir tous les champs"
+            });
+        }
 
-        const normalizedEmail = email?.trim().toLowerCase()
+        const normalizedEmail = email.trim().toLowerCase();
 
-        const getEmailUser = `SELECT * FROM admin WHERE email = $1`
+        const getEmailUser = `
+            SELECT * FROM admin WHERE email = $1
+        `;
 
         const result = await db.query(getEmailUser, [normalizedEmail]);
 
-        if (result.rows.length===0) {
+        if (result.rows.length === 0) {
             return res.status(404).json({
                 type: "email",
-                message : "Cet adresse email n'existe pas"
-            })
+                message: "Cette adresse email n'existe pas"
+            });
         }
 
         const user = result.rows[0];
@@ -79,7 +87,7 @@ async function Login(req, res) {
         if (!verify) {
             return res.status(401).json({
                 type: "password",
-                message : "Mot de passe incorrect"
+                message: "Mot de passe incorrect"
             });
         }
 
@@ -89,44 +97,71 @@ async function Login(req, res) {
                 email: user.email
             },
             process.env.JWT_SECRET,
-            {expiresIn: "1h"}
+            { expiresIn: "2d" }
         );
 
         res.cookie("token", token, {
             httpOnly: true,
-            secure:  process.env.NODE_ENV === "production",
+            secure: process.env.NODE_ENV === "production",
             sameSite: "strict",
-            maxAge: 2*24*60*60*1000 
+            maxAge: 2 * 24 * 60 * 60 * 1000,
+            path: "/"
         });
 
         return res.status(200).json({
             message: "Connexion réussie",
-            token: token,
             admin: {
                 id: user.id,
                 nom: user.nom,
                 email: user.email
             }
         });
-        
+
     } catch (error) {
         console.error("Erreur lors de la connexion :", error);
 
-        res.status(500).json({
+        return res.status(500).json({
             message: "Erreur lors de la connexion"
         });
     }
 }
 
+async function Me(req, res) {
+    try {
+        const getAdminQuery = `
+            SELECT id, nom, email
+            FROM admin
+            WHERE id = $1
+        `;
 
+        const result = await db.query(getAdminQuery, [req.admin.id]);
+
+        if (result.rows.length === 0) {
+            return res.status(401).json({
+                message: "Administrateur introuvable"
+            });
+        }
+
+        return res.status(200).json({
+            admin: result.rows[0]
+        });
+
+    } catch (error) {
+        console.error("Erreur vérification session :", error);
+
+        return res.status(500).json({
+            message: "Erreur lors de la vérification de la session"
+        });
+    }
+}
 
 async function Logout(req, res) {
-
     try {
         res.clearCookie("token", {
             httpOnly: true,
-            secure:  process.env.NODE_ENV === "production",
-            sameSite: "strict"
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "strict",
+            path: "/"
         });
 
         return res.status(200).json({
@@ -136,20 +171,18 @@ async function Logout(req, res) {
     } catch (error) {
         console.error("Erreur lors de la déconnexion :", error);
 
-        res.status(500).json({
+        return res.status(500).json({
             message: "Erreur lors de la déconnexion"
         });
     }
 }
 
-
-export  {
+export {
     Register,
     Login,
+    Me,
     Logout
-}
-
-
+};
 
 /*
 

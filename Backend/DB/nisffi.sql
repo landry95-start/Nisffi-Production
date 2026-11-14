@@ -165,3 +165,5 @@ CREATE TABLE images_produits (
     url TEXT NOT NULL,
     est_principale BOOLEAN DEFAULT FALSE
 );
+
+DELETE FROM admin;

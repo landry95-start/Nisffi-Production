@@ -1,5 +1,6 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+
 import {
   User,
   Heart,
@@ -7,7 +8,7 @@ import {
   ShoppingCart,
   Handbag,
   Menu,
-  X,
+  X
 } from "lucide-react";
 
 import { Link, NavLink } from "react-router-dom";
@@ -22,10 +23,35 @@ const navLinks = [
 ];
 
 const Header = () => {
+
   const { cart } = useCart();
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [search, setSearch] = useState("");
+
+  const [admin, setAdmin] = useState(() => {
+    return JSON.parse(localStorage.getItem("admin") || "null");
+  });
+
+  useEffect(() => {
+
+    const verifierAdmin = () => {
+      const adminConnecte = JSON.parse(
+        localStorage.getItem("admin") || "null"
+      );
+
+      setAdmin(adminConnecte);
+    };
+
+    window.addEventListener("storage", verifierAdmin);
+    window.addEventListener("adminAuthChanged", verifierAdmin);
+
+    return () => {
+      window.removeEventListener("storage", verifierAdmin);
+      window.removeEventListener("adminAuthChanged", verifierAdmin);
+    };
+
+  }, []);
 
   const totalArticles = cart.reduce((total, article) => {
     return total + Number(article.quantity || 0);
@@ -41,12 +67,10 @@ const Header = () => {
   return (
     <header className="relative z-50 bg-pink-100 shadow-sm">
 
-      
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         <div className="flex items-center justify-between py-3 lg:py-4">
 
-          
           <Link
             to="/home"
             className="flex items-center gap-2 shrink-0"
@@ -65,15 +89,11 @@ const Header = () => {
             </div>
           </Link>
 
-          
           <nav className="hidden lg:block">
             <ul className="flex items-center gap-5 xl:gap-7">
               {navLinks.map((link) => (
                 <li key={link.id} className="text-sm font-medium">
-                  <NavLink
-                    to={link.href}
-                    className={linkClass}
-                  >
+                  <NavLink to={link.href} className={linkClass}>
                     {link.label}
                   </NavLink>
                 </li>
@@ -81,7 +101,6 @@ const Header = () => {
             </ul>
           </nav>
 
-          {/* RECHERCHE DESKTOP */}
           <div className="hidden lg:flex items-center gap-2 border border-gray-400 rounded-full px-4 bg-white/50">
             <Search className="w-4 h-4 text-gray-500 shrink-0" />
 
@@ -94,18 +113,17 @@ const Header = () => {
             />
           </div>
 
-          {/* ICÔNES */}
           <div className="flex items-center gap-3 sm:gap-5">
 
             <Link
-              to="/login"
-              aria-label="Mon compte"
-              className="hidden sm:block hover:text-pink-600 transition"
+              to={admin ? "/admin" : "/login"}
+              aria-label={admin ? "Mon espace administrateur" : "Connexion"}
+              title={admin ? "Dashboard Admin" : "Se connecter"}
+              className="hover:text-pink-600 transition"
             >
               <User className="w-5 h-5 md:w-6 md:h-6" />
             </Link>
 
-            
             <Link
               to="/home"
               aria-label="Mes favoris"
@@ -118,7 +136,6 @@ const Header = () => {
               </span>
             </Link>
 
-            
             <Link
               to="/cart"
               aria-label="Mon panier"
@@ -131,7 +148,6 @@ const Header = () => {
               </span>
             </Link>
 
-            {/* BOUTON MENU MOBILE */}
             <button
               type="button"
               aria-label={menuOpen ? "Fermer le menu" : "Ouvrir le menu"}
@@ -150,13 +166,11 @@ const Header = () => {
         </div>
       </div>
 
-      {/* MENU MOBILE ET TABLETTE */}
       {menuOpen && (
         <div className="lg:hidden absolute top-full left-0 w-full bg-white shadow-lg border-t border-pink-100">
 
           <div className="max-w-7xl mx-auto px-5 py-5 space-y-5">
 
-           
             <div className="flex items-center gap-3 border border-gray-200 rounded-xl px-4">
               <Search className="w-5 h-5 text-gray-400" />
 
@@ -169,7 +183,6 @@ const Header = () => {
               />
             </div>
 
-            
             <nav>
               <ul className="flex flex-col">
                 {navLinks.map((link) => (
@@ -192,14 +205,13 @@ const Header = () => {
               </ul>
             </nav>
 
-            
             <Link
-              to="/login"
+              to={admin ? "/admin" : "/login"}
               onClick={() => setMenuOpen(false)}
-              className="flex items-center gap-3 text-sm text-gray-700 py-2"
+              className="flex items-center gap-3 text-sm text-pink-700 font-semibold py-2"
             >
               <User className="w-5 h-5" />
-              Mon compte
+              {admin ? "Dashboard Admin" : "Se connecter"}
             </Link>
 
           </div>
@@ -211,6 +223,8 @@ const Header = () => {
 };
 
 export default Header;
+
+
 
 
 

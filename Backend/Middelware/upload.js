@@ -55,6 +55,7 @@ const createUpload = (folder) => {
 };
 
 export const uploadProduct = createUpload("products");
+export const uploadCategory = createUpload("categories");
 
 
 

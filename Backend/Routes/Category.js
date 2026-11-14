@@ -2,7 +2,7 @@ import express from "express"
 
 const router = express.Router();
 
-import { uploadCategory } from "../Middelware/upload.js";
+import  {uploadCategory}  from "../Middelware/upload.js";
 
 import { AddCategory, GetCategories, deleteCategory, setCategories } from "../controllers/CategoryController.js";
 

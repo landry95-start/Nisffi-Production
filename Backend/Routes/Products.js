@@ -7,7 +7,7 @@ import {
     DeleteProduct
 } from "../controllers/ProductsController.js";
 
-import { uploadProduct } from "../Middelware/upload.js";
+import  {uploadProduct}  from "../Middelware/upload.js";
 
 const router = express.Router();
 

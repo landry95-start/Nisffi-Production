@@ -1,8 +1,9 @@
-import { useState } from "react";
+
+import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { X, ImagePlus, Plus } from "lucide-react";
+import { X, ImagePlus, Plus, Trash2 } from "lucide-react";
 
 import { useCategories } from "./DashboardAdmin/ContextCategory";
 
@@ -61,11 +62,30 @@ export default function ProductForm({
   marques = []
 }) {
 
+  // Image principale
   const [image, setImage] = useState(null);
   const [imagePreview, setImagePreview] = useState("");
+
+  // Images supplémentaires
+  const [imagesSupplementaires, setImagesSupplementaires] = useState([]);
+
   const [submitError, setSubmitError] = useState("");
 
+  // Référence pour nettoyer les aperçus
+  const previewUrls = useRef(new Set());
+
   const { categories } = useCategories();
+
+  // Nettoyage des URL temporaires à la fermeture du composant
+  useEffect(() => {
+    return () => {
+      previewUrls.current.forEach((url) => {
+        URL.revokeObjectURL(url);
+      });
+
+      previewUrls.current.clear();
+    };
+  }, []);
 
   const {
     register,
@@ -88,30 +108,120 @@ export default function ProductForm({
     },
   });
 
-  // Sélectionner une image
+  // Vérification d'une image
+  const validateImage = (file) => {
+
+    const formatsAutorises = [
+      "image/jpeg",
+      "image/png",
+      "image/webp"
+    ];
+
+    if (!formatsAutorises.includes(file.type)) {
+      return "Format non autorisé. Utilisez JPG, PNG ou WEBP.";
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      return "Chaque image ne doit pas dépasser 2 Mo.";
+    }
+
+    return null;
+  };
+
+  // Sélectionner l'image principale
   const handleImageChange = (e) => {
 
     const file = e.target.files?.[0];
 
     if (!file) return;
 
-    if (!file.type.startsWith("image/")) {
-      alert("Veuillez sélectionner une image.");
+    const error = validateImage(file);
+
+    if (error) {
+      alert(error);
       e.target.value = "";
       return;
     }
 
-    if (file.size > 2 * 1024 * 1024) {
-      alert("L'image ne doit pas dépasser 2 Mo.");
-      e.target.value = "";
-      return;
+    // Nettoyer l'ancien aperçu
+    if (imagePreview) {
+      URL.revokeObjectURL(imagePreview);
+      previewUrls.current.delete(imagePreview);
     }
+
+    const preview = URL.createObjectURL(file);
+
+    previewUrls.current.add(preview);
 
     setImage(file);
-    setImagePreview(URL.createObjectURL(file));
+    setImagePreview(preview);
+
+    e.target.value = "";
   };
 
- 
+  // Sélectionner les images supplémentaires
+  const handleAdditionalImages = (e) => {
+
+    const files = Array.from(e.target.files || []);
+
+    if (!files.length) return;
+
+    const nombreRestant = 5 - imagesSupplementaires.length;
+
+    if (files.length > nombreRestant) {
+      alert(`Vous pouvez ajouter encore ${nombreRestant} image(s) maximum.`);
+      e.target.value = "";
+      return;
+    }
+
+    // Vérifier tous les fichiers avant de les ajouter
+    for (const file of files) {
+
+      const error = validateImage(file);
+
+      if (error) {
+        alert(error);
+        e.target.value = "";
+        return;
+      }
+    }
+
+    const nouvellesImages = files.map((file) => {
+
+      const preview = URL.createObjectURL(file);
+
+      previewUrls.current.add(preview);
+
+      return {
+        file,
+        preview
+      };
+    });
+
+    setImagesSupplementaires((prev) => [
+      ...prev,
+      ...nouvellesImages
+    ]);
+
+    e.target.value = "";
+  };
+
+  // Supprimer une image supplémentaire
+  const removeAdditionalImage = (index) => {
+
+    const imageASupprimer = imagesSupplementaires[index];
+
+    if (imageASupprimer) {
+      URL.revokeObjectURL(imageASupprimer.preview);
+      previewUrls.current.delete(imageASupprimer.preview);
+    }
+
+    setImagesSupplementaires((prev) =>
+      prev.filter((_, i) => i !== index)
+    );
+  };
+
+  // Soumission du formulaire
   const submitProduct = async (data) => {
 
     setSubmitError("");
@@ -122,15 +232,26 @@ export default function ProductForm({
         throw new Error("La fonction onSubmit n'a pas été transmise.");
       }
 
+      if (!image) {
+        throw new Error("Veuillez sélectionner une image principale.");
+      }
 
       await onSubmit({
         ...data,
-        ancienPrix: data.ancienPrix === "" ? null : data.ancienPrix,
+
+        ancienPrix: data.ancienPrix === ""
+          ? null
+          : data.ancienPrix,
+
         image,
+
+        images: imagesSupplementaires.map((item) => item.file)
       });
 
       setImage(null);
       setImagePreview("");
+      setImagesSupplementaires([]);
+
       onClose?.();
 
     } catch (error) {
@@ -181,10 +302,11 @@ export default function ProductForm({
           className="p-6 space-y-5"
         >
 
-          
+          {/* Image principale */}
+
           <div>
             <label className="block text-sm font-medium mb-2">
-              Image du produit *
+              Image principale *
             </label>
 
             <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-[#E8B8CC] rounded-xl bg-[#FCF8FA] p-6 cursor-pointer hover:bg-[#F8EDF2]">
@@ -215,7 +337,7 @@ export default function ProductForm({
 
               <input
                 type="file"
-                accept="image/*"
+                accept="image/jpeg,image/png,image/webp"
                 onChange={handleImageChange}
                 className="hidden"
               />
@@ -223,7 +345,82 @@ export default function ProductForm({
             </label>
           </div>
 
-          
+          {/* Images supplémentaires */}
+
+          <div>
+
+            <div className="flex items-center justify-between mb-2">
+
+              <label className="text-sm font-medium">
+                Images supplémentaires (facultatif)
+              </label>
+
+              <span className="text-xs text-gray-400">
+                {imagesSupplementaires.length}/5
+              </span>
+
+            </div>
+
+            <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
+
+              {imagesSupplementaires.map((item, index) => (
+
+                <div
+                  key={item.preview}
+                  className="relative aspect-square"
+                >
+
+                  <img
+                    src={item.preview}
+                    alt={`Image supplémentaire ${index + 1}`}
+                    className="w-full h-full object-cover rounded-lg border border-[#EDE3E7]"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => removeAdditionalImage(index)}
+                    className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1 hover:bg-red-700"
+                    aria-label="Supprimer cette image"
+                  >
+                    <X size={14} />
+                  </button>
+
+                </div>
+
+              ))}
+
+              {imagesSupplementaires.length < 5 && (
+
+                <label className="aspect-square flex flex-col items-center justify-center gap-1 border-2 border-dashed border-[#E8B8CC] rounded-lg bg-[#FCF8FA] cursor-pointer hover:bg-[#F8EDF2]">
+
+                  <Plus size={24} className="text-[#46152F]" />
+
+                  <span className="text-xs text-gray-500 text-center">
+                    Ajouter
+                  </span>
+
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    multiple
+                    onChange={handleAdditionalImages}
+                    className="hidden"
+                  />
+
+                </label>
+
+              )}
+
+            </div>
+
+            <p className="text-xs text-gray-400 mt-2">
+              Vous pouvez ajouter jusqu'à 5 images. Chaque image ne doit pas dépasser 2 Mo.
+            </p>
+
+          </div>
+
+          {/* Nom */}
+
           <div>
             <label className="block text-sm font-medium mb-2">
               Nom du produit *
@@ -238,10 +435,10 @@ export default function ProductForm({
             <InputError message={errors.nom?.message} />
           </div>
 
-         
+          {/* Catégorie, marque, univers et prix */}
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
-           
             <div>
               <label className="block text-sm font-medium mb-2">
                 Catégorie *
@@ -266,7 +463,6 @@ export default function ProductForm({
               <InputError message={errors.categorie?.message} />
             </div>
 
-           
             <div>
               <label className="block text-sm font-medium mb-2">
                 Marque (facultatif)
@@ -289,7 +485,7 @@ export default function ProductForm({
               </select>
             </div>
 
-           <div>
+            <div>
               <label className="block text-sm font-medium mb-2">
                 Univers du produit *
               </label>
@@ -307,7 +503,6 @@ export default function ProductForm({
               <InputError message={errors.univers?.message} />
             </div>
 
-           
             <div>
               <label className="block text-sm font-medium mb-2">
                 Prix (FCFA) *
@@ -324,7 +519,6 @@ export default function ProductForm({
               <InputError message={errors.prix?.message} />
             </div>
 
-            
             <div>
               <label className="block text-sm font-medium mb-2">
                 Ancien prix (FCFA)
@@ -341,7 +535,6 @@ export default function ProductForm({
               <InputError message={errors.ancienPrix?.message} />
             </div>
 
-            
             <div>
               <label className="block text-sm font-medium mb-2">
                 Quantité en stock *
@@ -358,7 +551,6 @@ export default function ProductForm({
               <InputError message={errors.stock?.message} />
             </div>
 
-            
             <div>
               <label className="block text-sm font-medium mb-2">
                 Couleur
@@ -371,7 +563,6 @@ export default function ProductForm({
               />
             </div>
 
-            
             <div>
               <label className="block text-sm font-medium mb-2">
                 Taille
@@ -386,7 +577,8 @@ export default function ProductForm({
 
           </div>
 
-         
+          {/* Description */}
+
           <div>
             <label className="block text-sm font-medium mb-2">
               Description
@@ -402,14 +594,16 @@ export default function ProductForm({
             <InputError message={errors.description?.message} />
           </div>
 
-          
+          {/* Erreur serveur */}
+
           {submitError && (
             <p className="text-sm text-red-600">
               {submitError}
             </p>
           )}
 
-        
+          {/* Boutons */}
+
           <div className="flex justify-end gap-3 pt-4 border-t border-[#EDE3E7]">
 
             <button
